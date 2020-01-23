@@ -15,7 +15,7 @@ namespace GasMon
     public class GetSensorLocation
     {
         private const string bucketName = "eventprocessing-ucas2-locationss3bucket-1dfub0iyuq3av";
-        private const string keyName = "locations.json";
+        private const string keyName = "locations-part2.json";
         private static readonly RegionEndpoint bucketRegion = RegionEndpoint.EUWest1;
         private static IAmazonS3 client;
         private static Logger logger = LogManager.GetCurrentClassLogger();
