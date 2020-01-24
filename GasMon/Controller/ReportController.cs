@@ -17,11 +17,14 @@ namespace GasMon.Controller
             logger.Info("Unauthorized Readings: " + unauthList.Count);
             logger.Info("Duplicated Readings: " + dupeList.Count);
 
-            var averageList = new List<Averages>()
+            var averageList = new List<(string id, double average)>();
 
             XLWorkbook sensorReadings = new XLWorkbook();
             var counter = 0;
             var fileName = "Sensor Readings Report";
+
+            double bestAverageSoFar = -1;
+            string bestAverageIdSoFar = null;
 
             foreach (var id in dataList.GroupBy(x => x.sensorId))
             {
@@ -33,7 +36,14 @@ namespace GasMon.Controller
                 ws.Cell(1, 4).Value = "Timestamp";
                 ws.Cell(1, 5).Value = "Date Time";
 
-                averageList.Add(id.OrderByDescending);
+                double average = id.Average(l => l.readingValueNumber);
+                averageList.Add( (id.Key, average) );
+
+                if (average > bestAverageSoFar)
+                {
+                    bestAverageSoFar = average;
+                    bestAverageIdSoFar = id.Key;
+                }
 
                 int row = 2;
                 foreach (var reading in id)
@@ -43,9 +53,20 @@ namespace GasMon.Controller
                     ws.Cell(row, 3).Value = reading.readingValue;
                     ws.Cell(row, 4).Value = reading.timeStamp;
                     ws.Cell(row, 5).Value = reading.dateTime;
-                    row++;                    
+                    row++;
                 }
-            }            
+            }
+
+            Console.WriteLine($"Highest average Sensor Reading is {bestAverageSoFar}, SensorID = {bestAverageIdSoFar}");
+            var location = locations.FirstOrDefault(l => l.sensorId == bestAverageIdSoFar);
+            if (location != null)
+            {
+                Console.WriteLine($"Found location, x = {location.xCoord} y = {location.yCoord}");
+            }
+            else
+            {
+                Console.WriteLine("Did not find location");
+            }
 
             if (fileName.Contains("."))
             {
@@ -54,9 +75,6 @@ namespace GasMon.Controller
             }
             fileName = fileName + ".xlsx";
             sensorReadings.SaveAs("C:/Work/Training/GasMon/GasMon/" + fileName);
-
-            averageReadings.OrderByDescending(x => x.Key);
-            Console.WriteLine("Highest Average Sensor Readings = " + averageReadings.Average(x => x.Value));
         }
     }
 }

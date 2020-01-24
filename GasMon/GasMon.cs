@@ -17,6 +17,8 @@ namespace GasMon
                 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("How long do you want the program to run for?");
+            int userInput = int.Parse(Console.ReadLine());
             //setting up queue
             var credentials = GetDefaultCredentials();
             var sensorLocation = new GetSensorLocation(credentials);
@@ -25,7 +27,7 @@ namespace GasMon
             var sensorData = new GetSensorData(credentials);
             await sensorData.CreateQueue();
             //sets up timer
-            DateTime endTime = DateTime.Now.AddMinutes(2);
+            DateTime endTime = DateTime.Now.AddMinutes(userInput);
             //actual readings list
             List<SensorDataModel> dataList = new List<SensorDataModel>();
             //duplicated list for error checking

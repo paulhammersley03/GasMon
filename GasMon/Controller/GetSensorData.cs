@@ -31,29 +31,37 @@ namespace GasMon
         }
 
         public async System.Threading.Tasks.Task<List<SensorDataModel>> GetSensorDataAsync()
-        {            
+        {
             List<SensorDataModel> sensorReadingsList = new List<SensorDataModel>();
-            List<Message> messages = (await sqs.ReceiveMessageAsync(new ReceiveMessageRequest(myQueueUrl) { WaitTimeSeconds = 3, MaxNumberOfMessages = 10 })).Messages;            
+            List<Message> messages = (await sqs.ReceiveMessageAsync(new ReceiveMessageRequest(myQueueUrl) { WaitTimeSeconds = 3, MaxNumberOfMessages = 10 })).Messages;
+
             foreach (var message in messages)
-            {                
-                var snsMessage = Amazon.SimpleNotificationService.Util.Message.ParseMessage(message.Body);
-                JObject reading = JObject.Parse(snsMessage.MessageText);                              
-                var sensorReading = new SensorDataModel(
-                            (string)reading["value"],
-                            (string)reading["eventId"],
-                            (string)reading["locationId"],
-                            (string)reading["timestamp"]
-                            );
-                sensorReadingsList.Add(sensorReading); 
+            {
+                try
+                {
+                    var snsMessage = Amazon.SimpleNotificationService.Util.Message.ParseMessage(message.Body);
+                    JObject reading = JObject.Parse(snsMessage.MessageText);
+                    var sensorReading = new SensorDataModel(
+                                (string)reading["value"],
+                                (string)reading["eventId"],
+                                (string)reading["locationId"],
+                                (string)reading["timestamp"]
+                                );
+                    sensorReadingsList.Add(sensorReading);
+                }
+                catch
+                {
+                    continue;
+                }
             }
 
             if (messages.Count > 0)
             {
-                //Deleting messages we've processed from Queue
                 await sqs.DeleteMessageBatchAsync(myQueueUrl, messages.Select(x => new DeleteMessageBatchRequestEntry(x.MessageId, x.ReceiptHandle)).ToList());
             }
-
             return sensorReadingsList;
-        }   
-    }  
+        }
+    }
 }
+
+
